@@ -1,5 +1,6 @@
+#! /usr/bin/env node
+
 import inquirer from "inquirer";
-import events from "inquirer/lib/utils/events.js";
 
 //Class user
 class User {
@@ -48,7 +49,6 @@ class Event {
     this.frontPrice = frontseatPrice;
     this.id = ++Event.count;
   }
-
   getEventDetail() {
     console.log("\nEvent Created Successfully!");
     console.log(`\n==>Event Name : "${this.eventName}" 
@@ -63,36 +63,34 @@ class Event {
   
   `);
   }
+}
 
-  getfrontTicket(seats: number, amount: number) {
-    console.log("*********************************************************");
-    console.log(`\n\t
-Event Name : ${this.eventName} 
-Event title : ${this.eventTitle} 
-Event location : ${this.location}  
-Event Id : ${this.id},
-Seat:${seats},
-Amount paid :${amount}
-`);
-    console.log("*********************************************************");
+class Ticket {
+  title: string;
+  id: number;
+  static count = 0;
+  frontSeats: number | null;
+  backseats?: number | null;
+
+  constructor(
+    eventTitle: string,
+    frontseats: number | null,
+    backseats: number | null
+  ) {
+    (this.title = eventTitle), (this.id = ++Ticket.count);
+    this.frontSeats = frontseats;
+    this.backseats = backseats;
   }
 
-  getbackTicket(seats: number, amount: number) {
-    console.log("*********************************************************");
-    console.log(`\n\t
-  Event Name : ${this.eventName} 
-  Event title : ${this.eventTitle} 
-  Event location : ${this.location}  
-  Event Id : ${this.id},
-  Seat:${seats},
-  Amount paid :${amount}
-  `);
-    console.log("*********************************************************");
+  getID() {
+    console.log("Your order is placed.");
+    console.log(`ID OF YOUR ORDER ${this.id}`);
   }
 }
 
 const usersArray: User[] = [];
 const event: Event[] = [];
+const ticket: Ticket[] = [];
 
 //Welcome function
 const welcome = () => {
@@ -134,59 +132,48 @@ async function select() {
     }
   }
 }
+
 //Sign In function
 async function getSignIn() {
   console.log("Sign Up For continue!");
-
-  const signIn = await inquirer.prompt([
+  const signInInfo = await inquirer.prompt([
     {
-      type: "confirm",
-      name: "userAns",
-      message: "First do sign in please.",
+      type: "string",
+      name: "name",
+      message: "Enter Your Name : ",
+    },
+    {
+      type: "string",
+      name: "email",
+      message: "Enter Your Email: ",
+    },
+    {
+      type: "password",
+      name: "Password",
+      message: "Enter Your Password: ",
+      mask: "*",
+      validate: function (input: string) {
+        if (input.length < 8) {
+          console.log("Password must be at least 8 character!");
+          return false;
+        } else {
+          return true;
+        }
+      },
     },
   ]);
-  const { userAns } = signIn;
 
-  if (userAns == true) {
-    const signInInfo = await inquirer.prompt([
-      {
-        type: "string",
-        name: "name",
-        message: "Enter Your Name : ",
-      },
-      {
-        type: "string",
-        name: "email",
-        message: "Enter Your Email: ",
-      },
-      {
-        type: "password",
-        name: "Password",
-        message: "Enter Your Password: ",
-        mask: "*",
-        validate: function (input: string) {
-          if (input.length < 8) {
-            console.log("Password must be at least 8 character!");
-            return false;
-          } else {
-            return true;
-          }
-        },
-      },
-    ]);
+  const { name, email, Password } = signInInfo;
 
-    const { name, email, Password } = signInInfo;
+  if (name && email && Password) {
+    const user = new User(name, email, Password);
+    console.log("Sign Up successfully!");
+    usersArray.push(user);
 
-    if (name && email && Password) {
-      const user = new User(name, email, Password);
-      console.log("Sign Up successfully!");
-      usersArray.push(user);
-
-      // console.log(usersArray)
-    } else {
-      console.error("Sign Up failed!");
-      console.log("Please enter complete information.");
-    }
+    // console.log(usersArray)
+  } else {
+    console.error("Sign Up failed!");
+    console.log("Please enter complete information.");
   }
 }
 
@@ -209,7 +196,9 @@ async function logIn() {
   ]);
 
   const { email, password } = userAns;
-
+  if (email == "saher@gmail.com" && password == "saher1234") {
+    await LoginAdmin();
+  }
   // console.log(usersArray)
   const index = usersArray.findIndex((user) => user.password == password);
 
@@ -218,17 +207,13 @@ async function logIn() {
       usersArray[index].email.includes(email) &&
       usersArray[index].password.includes(password);
     if (isInclude) {
-      if (usersArray[index].name.toLowerCase() == "admin") {
-        await LoginAdmin();
-      } else if (usersArray[index].name.toLowerCase() !== "admin") {
-        console.log("Successfully login!");
-        await userAction();
-      }
+      console.log("Successfully login!");
+      await userAction();
     } else if (isInclude == false) {
       console.log("Failed to login");
     }
   } else {
-    console.log("Failed To LogIn");
+    console.log("failed to login");
   }
 }
 
@@ -293,10 +278,10 @@ async function LoginAdmin() {
         {
           type: "number",
           name: "frontseats",
-          message: "Enter event seats:",
+          message: "Enter no of front seats:",
           validate: function (input: number) {
             if (isNaN(input)) {
-              console.log("Please enter seats in number");
+              console.log("Please enter no of front seats in number");
               return false;
             }
 
@@ -312,10 +297,10 @@ async function LoginAdmin() {
         {
           type: "number",
           name: "backseats",
-          message: "Enter event seats:",
+          message: "Enter no of back  seats:",
           validate: function (input: number) {
             if (isNaN(input)) {
-              console.log("Please enter seats in number");
+              console.log("Please enter no of back seats in number");
               return false;
             }
 
@@ -450,7 +435,7 @@ async function LoginAdmin() {
         {
           type: "number",
           name: "frontseats",
-          message: "Enter event seats:",
+          message: "Enter no of front seats:",
           default: currObj.frontSeats,
           validate: function (input: number) {
             if (isNaN(input)) {
@@ -465,8 +450,8 @@ async function LoginAdmin() {
         {
           type: "number",
           name: "backseats",
-          message: "Enter event seats:",
-          default: currObj.frontSeats,
+          message: "Enter no of back seats:",
+          default: currObj.backSeats,
           validate: function (input: number) {
             if (isNaN(input)) {
               console.log("Please enter seats in number");
@@ -476,7 +461,40 @@ async function LoginAdmin() {
             return true;
           },
         },
+        {
+          type: "number",
+          name: "frontseatsPrice",
+          message: "Enter price for Front seats: ",
+          default: currObj.frontPrice,
+        },
+        {
+          type: "number",
+          name: "backseatsPrice",
+          message: "Enter price for Back seats: ",
+          default: currObj.backprice,
+        },
       ]);
+
+      const {
+        name,
+        title,
+        date,
+        city,
+        location,
+        frontseats,
+        backseats,
+        frontseatsPrice,
+        backseatsPrice,
+      } = editProperty;
+
+      event[findIndexOfEditEvent].eventName = name;
+      event[findIndexOfEditEvent].eventTitle = title;
+      event[findIndexOfEditEvent].date = date;
+      event[findIndexOfEditEvent].city = city;
+      event[findIndexOfEditEvent].backprice = backseatsPrice;
+      event[findIndexOfEditEvent].backSeats = backseats;
+      event[findIndexOfEditEvent].frontPrice = frontseatsPrice;
+      event[findIndexOfEditEvent].frontSeats = frontseats;
     }
 
     if (opt == "Exit") {
@@ -509,7 +527,12 @@ async function userAction() {
         type: "list",
         name: "selectOption",
         message: "What would you like to do? ",
-        choices: ["View Available event", "Purchase Ticket", "Exit"],
+        choices: [
+          "View Available event",
+          "Purchase Ticket",
+          "View Ticket",
+          "Exit",
+        ],
       },
     ]);
 
@@ -535,6 +558,9 @@ async function userAction() {
       ]);
 
       const { options, seatingOptions } = userAns;
+      const findIndexOfSelectedEvent = event.findIndex(
+        (name) => name.eventName == options
+      );
 
       if (seatingOptions == "Front Side") {
         const { options, seatingOptions } = userAns;
@@ -543,6 +569,13 @@ async function userAction() {
             type: "number",
             name: "frontTicket",
             message: "How many tickets you want to purchase?",
+            validate: function (input) {
+              if (input > event[findIndexOfSelectedEvent].frontSeats) {
+                console.log("\nPlease enter valid no of seats.");
+                return false;
+              }
+              return true;
+            },
           },
           {
             type: "string",
@@ -568,32 +601,16 @@ async function userAction() {
           const findIndexOfSelectedEvent = event.findIndex(
             (name) => name.eventName == options
           );
-          // console.log(findIndexOfSelectedEvent)
-          if (currentBalance >= event[findIndexOfSelectedEvent].frontPrice) {
+          let pay = frontTicket * event[findIndexOfSelectedEvent].frontPrice;
+          console.log(pay);
+          if (currentBalance >= pay) {
             const seats =
               event[findIndexOfSelectedEvent].frontSeats - frontTicket;
             event[findIndexOfSelectedEvent].frontSeats = seats;
-            console.log(
-              "***************Transaction Successfull*******************"
-            );
-
-            const ticket = await inquirer.prompt([
-              {
-                type: "confirm",
-                name: "viewTicket",
-                message: "View Ticket?",
-              },
-            ]);
-            const { viewTicket } = ticket;
-            if (viewTicket) {
-              let deductPriceOFTicket =
-                creditCard - event[findIndexOfSelectedEvent].frontPrice;
-              event[findIndexOfSelectedEvent].getfrontTicket(
-                frontTicket,
-                deductPriceOFTicket
-              );
-              console.log("Transaction successfull!");
-            }
+            console.log("Transaction Successfull");
+            let newticket = new Ticket(options, frontTicket, null);
+            ticket.push(newticket);
+            newticket.getID();
           } else {
             console.log("Insufficient Balance!");
           }
@@ -607,6 +624,13 @@ async function userAction() {
             type: "number",
             name: "BackTicket",
             message: "How many tickets you want to purchase?",
+            validate: function (input) {
+              if (input > event[findIndexOfSelectedEvent].backSeats) {
+                console.log("\nPlease enter valid no of seats.");
+                return false;
+              }
+              return true;
+            },
           },
           {
             type: "string",
@@ -632,15 +656,38 @@ async function userAction() {
           const findIndexOfSelectedEvent = event.findIndex(
             (name) => name.eventName == options
           );
-          if (currentBalance >= event[findIndexOfSelectedEvent].backprice) {
+          let pay2 = BackTicket * event[findIndexOfSelectedEvent].backprice;
+          if (currentBalance >= pay2) {
             const seats =
               event[findIndexOfSelectedEvent].backSeats - BackTicket;
             event[findIndexOfSelectedEvent].backSeats = seats;
-            console.log("Transaction successfull!");
+            console.log(
+              "***************Transaction Successfull*******************"
+            );
+            let newticket1 = new Ticket(options, null, BackTicket);
+            ticket.push(newticket1);
+            newticket1.getID();
           } else {
             console.log("Insufficient Balance!");
           }
         }
+      }
+    } else if (selectOption == "View Ticket") {
+      const showTicket = await inquirer.prompt([
+        {
+          type: "number",
+          name: "idOFTicket",
+          message: "Enter the Ticket Id for View?",
+        },
+      ]);
+
+      const { idOFTicket } = showTicket;
+      let findIndexOfTicket = ticket.findIndex((id) => id.id == idOFTicket);
+      if (findIndexOfTicket !== -1) {
+        console.log("Your Ticket");
+        console.table(ticket[findIndexOfTicket]);
+      } else {
+        console.log("Please Enter valid Id");
       }
     } else {
       const exit = await inquirer.prompt([
