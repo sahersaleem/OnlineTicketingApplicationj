@@ -1,11 +1,27 @@
 #! /usr/bin/env node
 import inquirer from "inquirer";
+import chalkAnimation from "chalk-animation";
+import chalk from "chalk";
 //Class user
 class User {
     constructor(name, email, password) {
-        (this.name = name), (this.email = email), (this.password = password);
+        this.tickets = [];
+        (this.name = name),
+            (this.email = email),
+            (this.password = password),
+            (this.id = ++User.count);
+    }
+    getId() {
+        console.log(`Your Id is ${this.id}`);
+    }
+    getTicket(Ticket) {
+        this.tickets.push(Ticket);
+    }
+    getFull() {
+        console.table(this.tickets);
     }
 }
+User.count = 0;
 // event
 class Event {
     constructor(name, title, location, date, city, frontSeats, backSeats, frontseatPrice, backseatPrice) {
@@ -21,8 +37,8 @@ class Event {
         this.id = ++Event.count;
     }
     getEventDetail() {
-        console.log("\nEvent Created Successfully!");
-        console.log(`\n==>Event Name : "${this.eventName}" 
+        let event = (chalkAnimation.rainbow("\nEvent Created Successfully!"));
+        console.log(chalk.magenta(`\n==>Event Name : "${this.eventName}" 
     Event Title : "${this.eventTitle}" , 
     Event City: "${this.city}", 
     Event Location : "${this.location}" ,
@@ -32,10 +48,10 @@ class Event {
     Seats for Front : ${this.frontPrice} ,
     Seats for back : ${this.backprice}
   
-  `);
+  `));
     }
 }
-Event.count = 0;
+Event.count = Math.floor(Math.random() * 2);
 class Ticket {
     constructor(eventTitle, frontseats, backseats) {
         (this.title = eventTitle), (this.id = ++Ticket.count);
@@ -50,7 +66,7 @@ class Ticket {
 Ticket.count = 0;
 const usersArray = [];
 const event = [];
-const ticket = [];
+// const ticket: Ticket[] = [];
 //Welcome function
 const welcome = () => {
     return new Promise((res) => {
@@ -59,8 +75,9 @@ const welcome = () => {
 };
 //greetUser fucntion
 async function greetUser() {
-    console.log("Welcome To Our Ticketing Application ! ");
+    let welcomText = chalkAnimation.rainbow("Welcome To Our Ticketing System - your access to exclusive events and unforgettable experiences! ");
     await welcome();
+    welcomText.stop();
 }
 greetUser();
 async function select() {
@@ -71,7 +88,7 @@ async function select() {
             {
                 type: "list",
                 name: "option",
-                message: "What do you want to do ?",
+                message: chalk.bold.blue("Select an option to proceed:"),
                 choices: ["Sign Up", "Login", "Exit"],
             },
         ]);
@@ -90,7 +107,7 @@ async function select() {
 }
 //Sign In function
 async function getSignIn() {
-    console.log("Sign Up For continue!");
+    console.log(chalk.blueBright("Sign Up For continue!"));
     const signInInfo = await inquirer.prompt([
         {
             type: "string",
@@ -121,18 +138,19 @@ async function getSignIn() {
     const { name, email, Password } = signInInfo;
     if (name && email && Password) {
         const user = new User(name, email, Password);
-        console.log("Sign Up successfully!");
+        console.log(chalk.cyanBright("Sign Up successfully!"));
         usersArray.push(user);
+        user.getId();
         // console.log(usersArray)
     }
     else {
-        console.error("Sign Up failed!");
-        console.log("Please enter complete information.");
+        console.error(chalk.redBright("Sign Up failed!"));
+        console.log(chalk.redBright("Please enter complete information."));
     }
 }
 //Login function
 async function logIn() {
-    console.log("Login For Continue");
+    console.log(chalk.yellow("Login For Continue"));
     const userAns = await inquirer.prompt([
         {
             type: "string",
@@ -156,21 +174,20 @@ async function logIn() {
         let isInclude = usersArray[index].email.includes(email) &&
             usersArray[index].password.includes(password);
         if (isInclude) {
-            console.log("Successfully login!");
+            console.log(chalk.blue("Successfully login!"));
             await userAction();
         }
-        else if (isInclude == false) {
-            console.log("Failed to login");
+        else {
+            console.log("failed to login!");
         }
-    }
-    else {
-        console.log("failed to login");
     }
 }
 // separate functionality for admin
 async function LoginAdmin() {
     let continueProgram = true;
-    console.log("Hello,admin!");
+    let welcomeAdmin = chalkAnimation.pulse("Welcome admin! How can we assist you today?");
+    await welcome();
+    welcomeAdmin.stop();
     while (continueProgram) {
         const adminAns = await inquirer.prompt([
             {
@@ -324,7 +341,7 @@ async function LoginAdmin() {
                     validate: function (input) {
                         let checkFormat = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
                         if (!checkFormat.test(input)) {
-                            console.log("Please enter date in number please.");
+                            console.log("Please enter date in correct format.");
                             return false;
                         }
                         return true;
@@ -401,6 +418,7 @@ async function LoginAdmin() {
             ]);
             if ((ans.exit = true)) {
                 continueProgram = false;
+                console.log(chalk.redBright.italic("Exiting....."));
                 break;
             }
             else {
@@ -422,7 +440,7 @@ async function userAction() {
                 choices: [
                     "View Available event",
                     "Purchase Ticket",
-                    "View Ticket",
+                    "View Order List",
                     "Exit",
                 ],
             },
@@ -434,6 +452,11 @@ async function userAction() {
         }
         else if (selectOption == "Purchase Ticket") {
             const userAns = await inquirer.prompt([
+                {
+                    type: "number",
+                    name: "userId",
+                    message: "Enter Your Id?",
+                },
                 {
                     type: "list",
                     name: "options",
@@ -447,7 +470,7 @@ async function userAction() {
                     choices: ["Front Side", "Back Side"],
                 },
             ]);
-            const { options, seatingOptions } = userAns;
+            const { options, seatingOptions, userId } = userAns;
             const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
             if (seatingOptions == "Front Side") {
                 const { options, seatingOptions } = userAns;
@@ -482,19 +505,21 @@ async function userAction() {
                 ]);
                 const { frontTicket, creditCard, currentBalance, payment } = purchaseFrontSideTicket;
                 if (payment == true) {
+                    const findIndexOfUser = usersArray.findIndex((user) => user.id == userId);
+                    // console.log(findIndexOfUser);
                     const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
                     let pay = frontTicket * event[findIndexOfSelectedEvent].frontPrice;
-                    console.log(pay);
+                    console.log(`Total amount is ${pay}`);
                     if (currentBalance >= pay) {
                         const seats = event[findIndexOfSelectedEvent].frontSeats - frontTicket;
                         event[findIndexOfSelectedEvent].frontSeats = seats;
-                        console.log("Transaction Successfull");
+                        console.log(chalk.bgBlue.bold("Transaction Successfull"));
                         let newticket = new Ticket(options, frontTicket, null);
-                        ticket.push(newticket);
-                        newticket.getID();
+                        usersArray[findIndexOfUser].getTicket(newticket);
                     }
                     else {
-                        console.log("Insufficient Balance!");
+                        console.log(`You have ${currentBalance} in your account.`);
+                        console.log(chalk.redBright("Insufficient Balance!"));
                     }
                 }
             }
@@ -531,38 +556,36 @@ async function userAction() {
                 ]);
                 const { BackTicket, creditCard, currentBalance, payment } = purchaseBackSideTicket;
                 if (payment == true) {
+                    const findIndexOfUser1 = usersArray.findIndex((user) => user.id == userId);
                     const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
                     let pay2 = BackTicket * event[findIndexOfSelectedEvent].backprice;
+                    console.log(`Total amount is ${pay2}`);
                     if (currentBalance >= pay2) {
                         const seats = event[findIndexOfSelectedEvent].backSeats - BackTicket;
                         event[findIndexOfSelectedEvent].backSeats = seats;
-                        console.log("***************Transaction Successfull*******************");
+                        console.log(chalk.bgBlue.bold("Transaction Successfull"));
                         let newticket1 = new Ticket(options, null, BackTicket);
-                        ticket.push(newticket1);
-                        newticket1.getID();
+                        usersArray[findIndexOfUser1].getTicket(newticket1);
                     }
                     else {
-                        console.log("Insufficient Balance!");
+                        console.log(`You have ${currentBalance} in your account.`);
+                        console.log(chalk.redBright("Insufficient Balance!"));
                     }
                 }
             }
         }
-        else if (selectOption == "View Ticket") {
-            const showTicket = await inquirer.prompt([
+        else if (selectOption == "View Order List") {
+            const user = await inquirer.prompt([
                 {
                     type: "number",
-                    name: "idOFTicket",
-                    message: "Enter the Ticket Id for View?",
+                    name: "userId",
+                    message: "Enter Your Id:",
                 },
             ]);
-            const { idOFTicket } = showTicket;
-            let findIndexOfTicket = ticket.findIndex((id) => id.id == idOFTicket);
-            if (findIndexOfTicket !== -1) {
-                console.log("Your Ticket");
-                console.table(ticket[findIndexOfTicket]);
-            }
-            else {
-                console.log("Please Enter valid Id");
+            const { userId } = user;
+            const findIndexOfUser2 = usersArray.findIndex((user) => user.id == userId);
+            if (findIndexOfUser2 !== -1) {
+                usersArray[findIndexOfUser2].getFull();
             }
         }
         else {
@@ -574,6 +597,7 @@ async function userAction() {
                 },
             ]);
             if (exit.continue == true) {
+                console.log(chalk.italic.redBright("Exiting...."));
                 continueProgram2 = false;
                 break CONTINUEPROGRAM;
             }
