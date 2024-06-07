@@ -37,7 +37,7 @@ class Event {
         this.id = ++Event.count;
     }
     getEventDetail() {
-        let event = (chalkAnimation.rainbow("\nEvent Created Successfully!"));
+        console.log(chalk.yellow("\nEvent Created Successfully!"));
         console.log(chalk.magenta(`\n==>Event Name : "${this.eventName}" 
     Event Title : "${this.eventTitle}" , 
     Event City: "${this.city}", 
@@ -51,7 +51,7 @@ class Event {
   `));
     }
 }
-Event.count = Math.floor(Math.random() * 2);
+Event.count = 0;
 class Ticket {
     constructor(eventTitle, frontseats, backseats) {
         (this.title = eventTitle), (this.id = ++Ticket.count);
@@ -178,7 +178,7 @@ async function logIn() {
             await userAction();
         }
         else {
-            console.log("failed to login!");
+            console.log(chalk.red("failed to login!"));
         }
     }
 }
@@ -223,7 +223,7 @@ async function LoginAdmin() {
                     validate: function (input) {
                         let checkFormat = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
                         if (!checkFormat.test(input)) {
-                            console.log("Please enter date in number please.");
+                            console.log(chalk.red("Please enter date in number please."));
                             return false;
                         }
                         return true;
@@ -245,7 +245,7 @@ async function LoginAdmin() {
                     message: "Enter no of front seats:",
                     validate: function (input) {
                         if (isNaN(input)) {
-                            console.log("Please enter no of front seats in number");
+                            console.log(chalk.red("Please enter no of front seats in number"));
                             return false;
                         }
                         return true;
@@ -262,7 +262,7 @@ async function LoginAdmin() {
                     message: "Enter no of back  seats:",
                     validate: function (input) {
                         if (isNaN(input)) {
-                            console.log("Please enter no of back seats in number");
+                            console.log(chalk.red("Please enter no of back seats in number"));
                             return false;
                         }
                         return true;
@@ -296,7 +296,7 @@ async function LoginAdmin() {
             const findIndexOfDeleteEvents = event.findIndex((event) => event.eventName == events);
             if (findIndexOfDeleteEvents !== -1) {
                 const deleteEvent = event.splice(findIndexOfDeleteEvents, 1);
-                console.log("Updated Event List");
+                console.log(chalk.bold.blue("Updated Event List"));
                 console.table(event);
             }
         }
@@ -310,7 +310,7 @@ async function LoginAdmin() {
                     message: "Enter the event id you want to edit?",
                     validate: function (input) {
                         if (isNaN(input)) {
-                            console.log("Please enter Id in number");
+                            console.log(chalk.red("Please enter Id in number"));
                             return false;
                         }
                         return true;
@@ -341,7 +341,7 @@ async function LoginAdmin() {
                     validate: function (input) {
                         let checkFormat = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
                         if (!checkFormat.test(input)) {
-                            console.log("Please enter date in correct format.");
+                            console.log(chalk.red("Please enter date in correct format."));
                             return false;
                         }
                         return true;
@@ -366,7 +366,7 @@ async function LoginAdmin() {
                     default: currObj.frontSeats,
                     validate: function (input) {
                         if (isNaN(input)) {
-                            console.log("Please enter seats in number");
+                            console.log(chalk.red("Please enter seats in number"));
                             return false;
                         }
                         return true;
@@ -379,7 +379,7 @@ async function LoginAdmin() {
                     default: currObj.backSeats,
                     validate: function (input) {
                         if (isNaN(input)) {
-                            console.log("Please enter seats in number");
+                            console.log(chalk.red("Please enter seats in number"));
                             return false;
                         }
                         return true;
@@ -407,6 +407,7 @@ async function LoginAdmin() {
             event[findIndexOfEditEvent].backSeats = backseats;
             event[findIndexOfEditEvent].frontPrice = frontseatsPrice;
             event[findIndexOfEditEvent].frontSeats = frontseats;
+            console.log(chalk.yellow("Event edit successfully"));
         }
         if (opt == "Exit") {
             const ans = await inquirer.prompt([
@@ -462,116 +463,137 @@ async function userAction() {
                     name: "options",
                     message: "Choose an event to purchase ticket?",
                     choices: event.map((event) => event.eventName),
-                },
-                {
-                    type: "list",
-                    name: "seatingOptions",
-                    message: "Select the seating options:",
-                    choices: ["Front Side", "Back Side"],
-                },
+                }
             ]);
-            const { options, seatingOptions, userId } = userAns;
+            const { options, userId } = userAns;
             const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
-            if (seatingOptions == "Front Side") {
-                const { options, seatingOptions } = userAns;
-                const purchaseFrontSideTicket = await inquirer.prompt([
-                    {
-                        type: "number",
-                        name: "frontTicket",
-                        message: "How many tickets you want to purchase?",
-                        validate: function (input) {
-                            if (input > event[findIndexOfSelectedEvent].frontSeats) {
-                                console.log("\nPlease enter valid no of seats.");
-                                return false;
-                            }
-                            return true;
+            const [dateString, timestring] = event[findIndexOfSelectedEvent].date.split(" ");
+            const [yearstring, monthstring, daystring] = dateString.split("-");
+            const [hourString, minuteString, secondString] = timestring.split(":");
+            let year = parseInt(yearstring); // now convert the string into number the time previously have type "string as we mentioned in input during validation"
+            let month = parseInt(monthstring) + 1;
+            let day = parseInt(daystring);
+            let hour = parseInt(hourString);
+            let min = parseInt(minuteString);
+            let sec = parseInt(secondString);
+            let date = new Date(year, month, day, hour, min, sec);
+            //  console.log(date)
+            let currrentDate = Date.now();
+            //  console.log(currrentDate)
+            let eventDate = date.getTime();
+            //  console.log(eventDate)
+            if (eventDate >= currrentDate) {
+                const selectSeatingOption = await inquirer.prompt([{
+                        type: "list",
+                        name: "seatingOptions",
+                        message: "Select the seating options:",
+                        choices: ["Front Side", "Back Side"],
+                    }]);
+                const { seatingOptions } = selectSeatingOption;
+                if (seatingOptions == "Front Side") {
+                    const { options, seatingOptions } = userAns;
+                    const purchaseFrontSideTicket = await inquirer.prompt([
+                        {
+                            type: "number",
+                            name: "frontTicket",
+                            message: "How many tickets you want to purchase?",
+                            validate: function (input) {
+                                if (input > event[findIndexOfSelectedEvent].frontSeats) {
+                                    console.log(chalk.red("\nPlease enter valid no of seats."));
+                                    return false;
+                                }
+                                return true;
+                            },
                         },
-                    },
-                    {
-                        type: "string",
-                        name: "creditCard",
-                        message: "Enter your credit no:",
-                    },
-                    {
-                        type: "number",
-                        name: "currentBalance",
-                        message: "Enter your current balance:",
-                    },
-                    {
-                        type: "confirm",
-                        name: "payment",
-                        message: "Confirm your payment?:",
-                    },
-                ]);
-                const { frontTicket, creditCard, currentBalance, payment } = purchaseFrontSideTicket;
-                if (payment == true) {
-                    const findIndexOfUser = usersArray.findIndex((user) => user.id == userId);
-                    // console.log(findIndexOfUser);
-                    const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
-                    let pay = frontTicket * event[findIndexOfSelectedEvent].frontPrice;
-                    console.log(`Total amount is ${pay}`);
-                    if (currentBalance >= pay) {
-                        const seats = event[findIndexOfSelectedEvent].frontSeats - frontTicket;
-                        event[findIndexOfSelectedEvent].frontSeats = seats;
-                        console.log(chalk.bgBlue.bold("Transaction Successfull"));
-                        let newticket = new Ticket(options, frontTicket, null);
-                        usersArray[findIndexOfUser].getTicket(newticket);
+                        {
+                            type: "string",
+                            name: "creditCard",
+                            message: "Enter your credit no:",
+                        },
+                        {
+                            type: "number",
+                            name: "currentBalance",
+                            message: "Enter your current balance:",
+                        },
+                        {
+                            type: "confirm",
+                            name: "payment",
+                            message: "Confirm your payment?:",
+                        },
+                    ]);
+                    const { frontTicket, creditCard, currentBalance, payment } = purchaseFrontSideTicket;
+                    if (payment == true) {
+                        const findIndexOfUser = usersArray.findIndex((user) => user.id == userId);
+                        // console.log(findIndexOfUser);
+                        const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
+                        let pay = frontTicket * event[findIndexOfSelectedEvent].frontPrice;
+                        console.log(chalk.italic.cyanBright(`Total amount is ${pay}`));
+                        console.log(chalk.bold.cyan(`You have ${currentBalance} in your account.`));
+                        if (currentBalance >= pay) {
+                            const seats = event[findIndexOfSelectedEvent].frontSeats - frontTicket;
+                            event[findIndexOfSelectedEvent].frontSeats = seats;
+                            console.log(chalk.bgBlue.bold("Transaction Successfull"));
+                            let newticket = new Ticket(options, frontTicket, null);
+                            usersArray[findIndexOfUser].getTicket(newticket);
+                        }
+                        else {
+                            console.log(chalk.redBright("Insufficient Balance!"));
+                        }
                     }
-                    else {
-                        console.log(`You have ${currentBalance} in your account.`);
-                        console.log(chalk.redBright("Insufficient Balance!"));
+                }
+                // For back side
+                else if (seatingOptions == "Back Side") {
+                    const purchaseBackSideTicket = await inquirer.prompt([
+                        {
+                            type: "number",
+                            name: "BackTicket",
+                            message: "How many tickets you want to purchase?",
+                            validate: function (input) {
+                                if (input > event[findIndexOfSelectedEvent].backSeats) {
+                                    console.log("\nPlease enter valid no of seats.");
+                                    return false;
+                                }
+                                return true;
+                            },
+                        },
+                        {
+                            type: "string",
+                            name: "creditCard",
+                            message: "Enter your credit no:",
+                        },
+                        {
+                            type: "number",
+                            name: "currentBalance",
+                            message: "Enter your current balance:",
+                        },
+                        {
+                            type: "confirm",
+                            name: "payment",
+                            message: "Confirm your payment?:",
+                        },
+                    ]);
+                    const { BackTicket, creditCard, currentBalance, payment } = purchaseBackSideTicket;
+                    if (payment == true) {
+                        const findIndexOfUser1 = usersArray.findIndex((user) => user.id == userId);
+                        const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
+                        let pay2 = BackTicket * event[findIndexOfSelectedEvent].backprice;
+                        console.log(chalk.cyanBright(`Total amount is ${pay2}`));
+                        console.log(chalk.bold.cyan(`You have ${currentBalance} in your account.`));
+                        if (currentBalance >= pay2) {
+                            const seats = event[findIndexOfSelectedEvent].backSeats - BackTicket;
+                            event[findIndexOfSelectedEvent].backSeats = seats;
+                            console.log(chalk.bgBlue.bold("Transaction Successfull"));
+                            let newticket1 = new Ticket(options, null, BackTicket);
+                            usersArray[findIndexOfUser1].getTicket(newticket1);
+                        }
+                        else {
+                            console.log(chalk.redBright("Insufficient Balance!"));
+                        }
                     }
                 }
             }
-            // For back side
-            else if (seatingOptions == "Back Side") {
-                const purchaseBackSideTicket = await inquirer.prompt([
-                    {
-                        type: "number",
-                        name: "BackTicket",
-                        message: "How many tickets you want to purchase?",
-                        validate: function (input) {
-                            if (input > event[findIndexOfSelectedEvent].backSeats) {
-                                console.log("\nPlease enter valid no of seats.");
-                                return false;
-                            }
-                            return true;
-                        },
-                    },
-                    {
-                        type: "string",
-                        name: "creditCard",
-                        message: "Enter your credit no:",
-                    },
-                    {
-                        type: "number",
-                        name: "currentBalance",
-                        message: "Enter your current balance:",
-                    },
-                    {
-                        type: "confirm",
-                        name: "payment",
-                        message: "Confirm your payment?:",
-                    },
-                ]);
-                const { BackTicket, creditCard, currentBalance, payment } = purchaseBackSideTicket;
-                if (payment == true) {
-                    const findIndexOfUser1 = usersArray.findIndex((user) => user.id == userId);
-                    const findIndexOfSelectedEvent = event.findIndex((name) => name.eventName == options);
-                    let pay2 = BackTicket * event[findIndexOfSelectedEvent].backprice;
-                    console.log(`Total amount is ${pay2}`);
-                    if (currentBalance >= pay2) {
-                        const seats = event[findIndexOfSelectedEvent].backSeats - BackTicket;
-                        event[findIndexOfSelectedEvent].backSeats = seats;
-                        console.log(chalk.bgBlue.bold("Transaction Successfull"));
-                        let newticket1 = new Ticket(options, null, BackTicket);
-                        usersArray[findIndexOfUser1].getTicket(newticket1);
-                    }
-                    else {
-                        console.log(`You have ${currentBalance} in your account.`);
-                        console.log(chalk.redBright("Insufficient Balance!"));
-                    }
-                }
+            else {
+                console.log("Sorry ! Event date is expired!");
             }
         }
         else if (selectOption == "View Order List") {
@@ -597,7 +619,9 @@ async function userAction() {
                 },
             ]);
             if (exit.continue == true) {
-                console.log(chalk.italic.redBright("Exiting...."));
+                let exit = ((chalkAnimation.radar((chalk.red("Exiting....")))));
+                await welcome();
+                exit.stop;
                 continueProgram2 = false;
                 break CONTINUEPROGRAM;
             }

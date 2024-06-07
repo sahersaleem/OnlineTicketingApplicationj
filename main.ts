@@ -3,6 +3,7 @@
 import inquirer from "inquirer";
 import chalkAnimation from "chalk-animation";
 import chalk from "chalk";
+import events from "inquirer/lib/utils/events.js";
 
 //Class user
 class User {
@@ -69,7 +70,7 @@ class Event {
   }
 
   getEventDetail() {
-    console.log(chalk.yellow(("\nEvent Created Successfully!")))
+    console.log(chalk.yellow("\nEvent Created Successfully!"))
     console.log(chalk.magenta(`\n==>Event Name : "${this.eventName}" 
     Event Title : "${this.eventTitle}" , 
     Event City: "${this.city}", 
@@ -117,6 +118,10 @@ const welcome = () => {
     setTimeout(res, 3000);
   });
 };
+
+
+
+
 
 //greetUser fucntion
 async function greetUser() {
@@ -368,7 +373,7 @@ async function LoginAdmin() {
 
     if (opt == "View Event") {
       console.log("Available Events");
-      console.table(event);
+    console.table(event);
     }
 
     if (opt == "Delete Events") {
@@ -381,10 +386,13 @@ async function LoginAdmin() {
         },
       ]);
 
+
       const { events } = deleteEvents;
       const findIndexOfDeleteEvents = event.findIndex(
         (event) => event.eventName == events
       );
+
+  
 
       if (findIndexOfDeleteEvents !== -1) {
         const deleteEvent = event.splice(findIndexOfDeleteEvents, 1);
@@ -519,6 +527,8 @@ async function LoginAdmin() {
       event[findIndexOfEditEvent].backSeats = backseats;
       event[findIndexOfEditEvent].frontPrice = frontseatsPrice;
       event[findIndexOfEditEvent].frontSeats = frontseats;
+
+      console.log(chalk.yellow("Event edit successfully"))
     }
 
     if (opt == "Exit") {
@@ -567,6 +577,10 @@ async function userAction() {
     if (selectOption == "View Available event") {
       console.log("\n\t Available Events!");
       console.table(event);
+
+
+
+
     } else if (selectOption == "Purchase Ticket") {
       const userAns = await inquirer.prompt([
         {
@@ -579,19 +593,58 @@ async function userAction() {
           name: "options",
           message: "Choose an event to purchase ticket?",
           choices: event.map((event) => event.eventName),
-        },
-        {
-          type: "list",
-          name: "seatingOptions",
-          message: "Select the seating options:",
-          choices: ["Front Side", "Back Side"],
-        },
+        }
+       
       ]);
 
-      const { options, seatingOptions, userId } = userAns;
+      const { options, userId } = userAns;
       const findIndexOfSelectedEvent = event.findIndex(
         (name) => name.eventName == options
       );
+
+
+
+
+
+      const [dateString,timestring]=event[findIndexOfSelectedEvent].date.split(" ")
+      const [yearstring,monthstring,daystring] =dateString.split("-")
+      const [hourString,minuteString,secondString]=timestring.split(":")
+   
+      let year = parseInt(yearstring); // now convert the string into number the time previously have type "string as we mentioned in input during validation"
+      let month = parseInt(monthstring) + 1;
+      let day = parseInt(daystring);
+      let hour = parseInt(hourString);
+      let min = parseInt(minuteString);
+      let sec = parseInt(secondString);
+   
+   
+     let date = new Date(year,month,day,hour,min,sec)
+    //  console.log(date)
+     let currrentDate = Date.now()
+    //  console.log(currrentDate)
+     let eventDate = date.getTime()
+    //  console.log(eventDate)
+   
+if(eventDate>=currrentDate){
+
+const selectSeatingOption = await inquirer.prompt([{
+
+
+  
+    type: "list",
+    name: "seatingOptions",
+    message: "Select the seating options:",
+    choices: ["Front Side", "Back Side"],
+  
+
+
+
+}]
+
+)
+
+
+const{seatingOptions}=selectSeatingOption
 
       if (seatingOptions == "Front Side") {
         const { options, seatingOptions } = userAns;
@@ -717,6 +770,20 @@ async function userAction() {
           }
         }
       }
+    }
+
+  else{
+    console.log("Sorry ! Event date is expired!")
+  }
+
+
+
+
+
+
+
+
+
     } else if (selectOption == "View Order List") {
       const user = await inquirer.prompt([
         {
